@@ -10,11 +10,11 @@ WORKDIR /terraform
 VOLUME ["/terraform"]
 
 # Copy a script to initialize, plan, and apply the Terraform configuration
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY init_terraform_realm.sh /init_terraform_realm.sh
+RUN chmod +x /init_terraform_realm.sh
 
 # Label for the network configuration
 LABEL network="keycloak-network"
 
 # Set entrypoint
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/init_terraform_realm.sh"]
