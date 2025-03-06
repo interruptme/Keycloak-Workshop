@@ -6,9 +6,15 @@ RUN apk add --no-cache curl jq bash
 # Set working directory
 WORKDIR /terraform
 
+# Create a volume mount point
+VOLUME ["/terraform"]
+
 # Copy a script to initialize, plan, and apply the Terraform configuration
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+# Label for the network configuration
+LABEL network="keycloak-network"
 
 # Set entrypoint
 ENTRYPOINT ["/entrypoint.sh"]

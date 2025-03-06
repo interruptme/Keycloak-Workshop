@@ -12,5 +12,5 @@ provider "keycloak" {
   username      = "admin"
   password      = "admin_password"
   url           = "http://keycloak-26-1-3:8080"
-  initial_login = false
+  initial_login = true
 }
