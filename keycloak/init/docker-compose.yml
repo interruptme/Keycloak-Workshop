@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  terraform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./terraform:/terraform
+    networks:
+      - keycloak-network
+
+networks:
+  keycloak-network:
+    name: keycloak-network
+    external: true
