@@ -29,6 +29,10 @@ terraform.rc
 # Ignore provider binary
 terraform-provider-*
 
+# Ignore plan files
+*tfplan*
+*.plan
+
 # Log files
 *.log
 

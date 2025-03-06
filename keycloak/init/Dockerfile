@@ -1,0 +1,14 @@
+FROM hashicorp/terraform:latest
+
+# Install dependencies for the Keycloak provider
+RUN apk add --no-cache curl jq bash
+
+# Set working directory
+WORKDIR /terraform
+
+# Copy a script to initialize, plan, and apply the Terraform configuration
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Set entrypoint
+ENTRYPOINT ["/entrypoint.sh"]
