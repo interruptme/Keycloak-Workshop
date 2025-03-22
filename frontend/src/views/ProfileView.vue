@@ -251,3 +251,4 @@ onMounted(async () => {
   color: #721c24;
   text-align: center;
 }
+</style>

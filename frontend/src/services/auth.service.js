@@ -1,4 +1,4 @@
-import Keycloak from '@keycloak/keycloak-js';
+import Keycloak from 'keycloak-js';
 import { ref, reactive, computed } from '@vue/reactivity';
 
 // Create reactive state
