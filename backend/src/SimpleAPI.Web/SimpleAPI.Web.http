@@ -1,0 +1,6 @@
+@SimpleAPI.Web_HostAddress = http://localhost:5000
+
+# @title Get Weather Forecasts
+GET {{SimpleAPI.Web_HostAddress}}/weatherforecast
+Accept: application/json
+###
