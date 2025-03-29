@@ -10,7 +10,7 @@ const state = reactive({
   authError: null,
   keycloakReady: false,
   tokenExpiration: null,
-  initializing: false // New flag to prevent multiple init calls
+  initializing: false
 });
 
 // Initialize Keycloak instance
@@ -32,11 +32,11 @@ const initKeycloak = () => {
 
   return keycloakInstance.value
     .init({
-      onLoad: 'check-sso', // Don't auto-login
-      pkceMethod: 'S256', // Use PKCE for added security
-      checkLoginIframe: false, // Disable iframe check for cross-origin issues
+      onLoad: 'check-sso',
+      pkceMethod: 'S256',
+      checkLoginIframe: false,
       silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
-      silentCheckSsoFallback: false, // Prevent fallback to login page
+      silentCheckSsoFallback: false,
     })
     .then((authenticated) => {
       state.isAuthenticated = authenticated;
@@ -46,7 +46,8 @@ const initKeycloak = () => {
       
       if (authenticated) {
         updateTokenExpiration();
-        return loadUserProfile();
+        // Don't automatically load profile here to prevent CORS issues
+        // Will load profile on demand when needed
       }
       
       return authenticated;
@@ -60,24 +61,67 @@ const initKeycloak = () => {
     });
 };
 
-// Other functions remain the same
+// Load user profile with error handling specifically for CORS issues
 const loadUserProfile = () => {
   if (!keycloakInstance.value || !state.isAuthenticated) {
     return Promise.reject(new Error('Not authenticated'));
   }
 
-  return keycloakInstance.value
-    .loadUserProfile()
-    .then((profile) => {
+  // Check if we already have the profile
+  if (state.userProfile) {
+    return Promise.resolve(state.userProfile);
+  }
+
+  // First method: Try to use the userinfo endpoint directly
+  return getUserInfoFromToken()
+    .then(profile => {
       state.userProfile = profile;
       return profile;
     })
-    .catch((error) => {
-      console.error('Error loading user profile', error);
-      throw error;
+    .catch(error => {
+      console.warn('Failed to parse user info from token, trying Keycloak API', error);
+      
+      // Fallback to Keycloak's loadUserProfile method
+      return keycloakInstance.value.loadUserProfile()
+        .then(profile => {
+          state.userProfile = profile;
+          return profile;
+        })
+        .catch(error => {
+          console.error('Error loading user profile via Keycloak API', error);
+          throw error;
+        });
     });
 };
 
+// Extract user info directly from the access token
+const getUserInfoFromToken = () => {
+  if (!keycloakInstance.value || !keycloakInstance.value.token) {
+    return Promise.reject(new Error('No token available'));
+  }
+  
+  try {
+    // Parse the token
+    const tokenParts = keycloakInstance.value.token.split('.');
+    const tokenPayload = JSON.parse(atob(tokenParts[1]));
+    
+    // Create a user profile object from token claims
+    const profile = {
+      id: tokenPayload.sub,
+      username: tokenPayload.preferred_username || tokenPayload.username,
+      email: tokenPayload.email,
+      firstName: tokenPayload.given_name,
+      lastName: tokenPayload.family_name,
+      // Add any other fields you need from the token
+    };
+    
+    return Promise.resolve(profile);
+  } catch (error) {
+    return Promise.reject(error);
+  }
+};
+
+// Login function
 const login = (redirectUri = window.location.href) => {
   if (!keycloakInstance.value) {
     return Promise.reject(new Error('Keycloak not initialized'));
@@ -89,6 +133,7 @@ const login = (redirectUri = window.location.href) => {
   });
 };
 
+// Logout function
 const logout = () => {
   if (!keycloakInstance.value) {
     return Promise.reject(new Error('Keycloak not initialized'));
@@ -97,6 +142,7 @@ const logout = () => {
   return keycloakInstance.value.logout();
 };
 
+// Update token expiration time
 const updateTokenExpiration = () => {
   if (keycloakInstance.value && keycloakInstance.value.token) {
     // Parse JWT to get expiration
@@ -110,6 +156,7 @@ const updateTokenExpiration = () => {
   }
 };
 
+// Get auth token
 const getToken = () => {
   if (!keycloakInstance.value || !state.isAuthenticated) {
     return null;
@@ -117,6 +164,7 @@ const getToken = () => {
   return keycloakInstance.value.token;
 };
 
+// Update token - returns a promise
 const updateToken = (minValidity = 60) => {
   if (!keycloakInstance.value || !state.isAuthenticated) {
     return Promise.reject(new Error('Not authenticated'));
@@ -136,11 +184,13 @@ const updateToken = (minValidity = 60) => {
     });
 };
 
+// Computed value for token expiration
 const tokenExpired = computed(() => {
   if (!state.tokenExpiration) return true;
   return state.tokenExpiration <= Date.now();
 });
 
+// Handle token expiration
 const setupTokenRefresh = () => {
   if (!keycloakInstance.value || !state.isAuthenticated) return;
   
@@ -163,6 +213,7 @@ const setupTokenRefresh = () => {
   };
 };
 
+// Check if user has specific role
 const hasRole = (role) => {
   if (!keycloakInstance.value || !state.isAuthenticated) {
     return false;
@@ -179,5 +230,6 @@ export default {
   updateToken,
   hasRole,
   setupTokenRefresh,
-  tokenExpired
+  tokenExpired,
+  loadUserProfile
 };
