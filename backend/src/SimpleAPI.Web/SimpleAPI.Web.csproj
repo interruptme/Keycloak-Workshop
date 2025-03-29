@@ -5,8 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FastEndpoints" Version="5.29.0" />
-    <PackageReference Include="FastEndpoints.Swagger" Version="5.29.0" />
+    <PackageReference Include="FastEndpoints" Version="5.35.0" />
+    <PackageReference Include="FastEndpoints.Swagger" Version="5.35.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.8" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
