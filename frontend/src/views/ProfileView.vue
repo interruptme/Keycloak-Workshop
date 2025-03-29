@@ -25,15 +25,6 @@
             <span>{{ userProfile.email }}</span>
           </div>
           
-          <div v-if="userRoles.length > 0" class="profile-row">
-            <strong>Roles:</strong>
-            <span>{{ userRoles.join(', ') }}</span>
-          </div>
-          
-          <div class="profile-row">
-            <strong>Account Created:</strong>
-            <span>{{ createdDate }}</span>
-          </div>
         </div>
         
         <!-- Section for displaying tokens -->
@@ -163,37 +154,6 @@ const userInitials = computed(() => {
   
   return (first + last).toUpperCase()
 })
-
-// Remove token expiration formatted time since we removed that section
-
-// Mock user roles - in a real app, you would get these from the token
-const userRoles = computed(() => {
-  // Check if we have a token and it contains realm_access.roles
-  const token = authService.getToken()
-  if (!token) return []
-  
-  try {
-    const tokenParts = token.split('.')
-    const tokenPayload = JSON.parse(atob(tokenParts[1]))
-    
-    // Check if realm_access roles exist
-    if (tokenPayload.realm_access && Array.isArray(tokenPayload.realm_access.roles)) {
-      return tokenPayload.realm_access.roles
-    }
-    
-    return []
-  } catch (error) {
-    console.error('Error parsing token for roles', error)
-    return []
-  }
-})
-
-// Mock created date - in a real app, you might get this from the user profile
-const createdDate = computed(() => {
-  return new Date().toLocaleDateString()
-})
-
-// Removed refresh token function since we removed that section
 
 // Function to format token for display
 const formatToken = (token) => {
