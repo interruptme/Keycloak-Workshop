@@ -12,12 +12,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - keycloak-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U keycloak"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.1.3
@@ -34,16 +28,28 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     networks:
       - keycloak-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: simple-api-backend
+    ports:
+      - "5000:5000"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://+:5000"
+      Keycloak__BaseUrl: http://keycloak:8080
+      Keycloak__Realm: demo-realm
+      CORS__AllowedOrigins: "http://localhost:5173"
+    networks:
+      - keycloak-network
+    depends_on:
+      - keycloak
 
 networks:
   keycloak-network:
