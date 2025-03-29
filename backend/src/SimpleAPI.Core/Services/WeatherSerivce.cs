@@ -10,30 +10,15 @@ public class WeatherService : IWeatherService
     "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
   };
 
-  private static readonly List<WeatherForecast> _forecasts = new();
-
-  public WeatherService()
+  public Task<WeatherForecast> GetForecastAsync()
   {
-    // Initialize with some data if empty
-    if (!_forecasts.Any())
+    var random = new Random();
+    var forecast = new WeatherForecast
     {
-      var rng = new Random();
-      _forecasts.AddRange(Enumerable.Range(1, 5).Select(index => new WeatherForecast
-      {
-        Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-        TemperatureC = rng.Next(-20, 55),
-        Summary = Summaries[rng.Next(Summaries.Length)]
-      }));
-    }
-  }
-
-  public Task<List<WeatherForecast>> GetForecastsAsync()
-  {
-    return Task.FromResult(_forecasts);
-  }
-
-  public Task<WeatherForecast?> GetForecastByIdAsync(Guid id)
-  {
-    return Task.FromResult(_forecasts.FirstOrDefault(f => f.Id == id));
+      Date = DateOnly.FromDateTime(DateTime.Now),
+      TemperatureC = random.Next(-20, 55),
+      Summary = Summaries[random.Next(Summaries.Length)]
+    };
+    return Task.FromResult(forecast);
   }
 }

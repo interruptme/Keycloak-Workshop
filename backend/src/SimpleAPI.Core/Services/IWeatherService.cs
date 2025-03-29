@@ -4,6 +4,5 @@ namespace SimpleAPI.Core.Services;
 
 public interface IWeatherService
 {
-  Task<List<WeatherForecast>> GetForecastsAsync();
-  Task<WeatherForecast?> GetForecastByIdAsync(Guid id);
+  Task<WeatherForecast> GetForecastAsync();
 }

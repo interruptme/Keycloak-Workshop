@@ -8,7 +8,7 @@ namespace SimpleAPI.Core.Endpoints;
 
 public class GetWeatherForecastResponse
 {
-  public List<WeatherForecast> Forecasts { get; set; } = new();
+  public WeatherForecast Forecast { get; set; } = new();
 }
 
 internal class GetWeatherForecastEndpoint : 
@@ -29,11 +29,11 @@ internal class GetWeatherForecastEndpoint :
 
   public override async Task HandleAsync(CancellationToken cancellationToken = default)
   {
-    var forecasts = await _weatherService.GetForecastsAsync();
+    var forecast = await _weatherService.GetForecastAsync();
     
     await SendAsync(new GetWeatherForecastResponse
     {
-      Forecasts = forecasts
+      Forecast = forecast
     }, cancellation: cancellationToken);
   }
 }
