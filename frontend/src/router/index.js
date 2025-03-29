@@ -33,50 +33,63 @@ const router = createRouter({
   routes
 })
 
+// Store a flag to prevent redirect loops
+let pendingRedirect = false;
+
 // Navigation guard
 router.beforeEach(async (to, from, next) => {
+  // Skip if we're already redirecting
+  if (pendingRedirect) {
+    pendingRedirect = false;
+    return next();
+  }
+  
+  // Initialize auth service if not already done
+  if (!authService.state.isInitialized) {
+    try {
+      await authService.initKeycloak();
+    } catch (error) {
+      console.error('Failed to initialize Keycloak', error);
+    }
+  }
+
   // Check if route requires authentication
   if (to.matched.some(record => record.meta.requiresAuth)) {
-    if (!authService.state.isInitialized) {
-      // Wait for auth service to initialize
-      try {
-        await authService.initKeycloak()
-      } catch (error) {
-        console.error('Failed to initialize Keycloak', error)
-      }
-    }
-
     if (!authService.state.isAuthenticated) {
       // Redirect to login page with return URL
-      next({
+      pendingRedirect = true;
+      return next({
         path: '/login',
         query: { redirect: to.fullPath }
-      })
+      });
     } else if (authService.tokenExpired.value) {
       // Try to refresh token
       try {
-        await authService.updateToken()
-        next()
+        await authService.updateToken();
+        return next();
       } catch (error) {
-        next({
+        pendingRedirect = true;
+        return next({
           path: '/login',
           query: { redirect: to.fullPath }
-        })
-      }
-    } else {
-      next()
-    }
-  } else {
-    // Initialize auth if not already initialized
-    if (!authService.state.isInitialized) {
-      try {
-        await authService.initKeycloak()
-      } catch (error) {
-        console.error('Failed to initialize Keycloak', error)
+        });
       }
     }
-    next()
   }
+  
+  // Special handling for login page when already authenticated
+  if (to.path === '/login' && authService.state.isAuthenticated) {
+    // If there's a redirect in query params, go there
+    if (to.query.redirect) {
+      return next({ path: to.query.redirect });
+    }
+    // Otherwise go to home
+    if (from.path !== '/') {
+      return next({ path: '/' });
+    }
+  }
+  
+  next();
 })
 
 export default router

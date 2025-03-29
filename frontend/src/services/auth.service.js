@@ -9,11 +9,19 @@ const state = reactive({
   userProfile: null,
   authError: null,
   keycloakReady: false,
-  tokenExpiration: null
+  tokenExpiration: null,
+  initializing: false // New flag to prevent multiple init calls
 });
 
 // Initialize Keycloak instance
 const initKeycloak = () => {
+  // Prevent duplicate initialization
+  if (state.initializing || state.isInitialized) {
+    return Promise.resolve(state.isAuthenticated);
+  }
+  
+  state.initializing = true;
+
   const keycloakConfig = {
     url: import.meta.env.VITE_KEYCLOAK_URL,
     realm: import.meta.env.VITE_KEYCLOAK_REALM,
@@ -28,11 +36,13 @@ const initKeycloak = () => {
       pkceMethod: 'S256', // Use PKCE for added security
       checkLoginIframe: false, // Disable iframe check for cross-origin issues
       silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+      silentCheckSsoFallback: false, // Prevent fallback to login page
     })
     .then((authenticated) => {
       state.isAuthenticated = authenticated;
       state.isInitialized = true;
       state.keycloakReady = true;
+      state.initializing = false;
       
       if (authenticated) {
         updateTokenExpiration();
@@ -44,12 +54,13 @@ const initKeycloak = () => {
     .catch((error) => {
       state.authError = error;
       state.isInitialized = true;
+      state.initializing = false;
       console.error('Keycloak initialization error', error);
       throw error;
     });
 };
 
-// Load user profile if authenticated
+// Other functions remain the same
 const loadUserProfile = () => {
   if (!keycloakInstance.value || !state.isAuthenticated) {
     return Promise.reject(new Error('Not authenticated'));
@@ -67,7 +78,6 @@ const loadUserProfile = () => {
     });
 };
 
-// Login function
 const login = (redirectUri = window.location.href) => {
   if (!keycloakInstance.value) {
     return Promise.reject(new Error('Keycloak not initialized'));
@@ -79,7 +89,6 @@ const login = (redirectUri = window.location.href) => {
   });
 };
 
-// Logout function
 const logout = () => {
   if (!keycloakInstance.value) {
     return Promise.reject(new Error('Keycloak not initialized'));
@@ -88,7 +97,6 @@ const logout = () => {
   return keycloakInstance.value.logout();
 };
 
-// Update token expiration time
 const updateTokenExpiration = () => {
   if (keycloakInstance.value && keycloakInstance.value.token) {
     // Parse JWT to get expiration
@@ -102,7 +110,6 @@ const updateTokenExpiration = () => {
   }
 };
 
-// Get auth token
 const getToken = () => {
   if (!keycloakInstance.value || !state.isAuthenticated) {
     return null;
@@ -110,7 +117,6 @@ const getToken = () => {
   return keycloakInstance.value.token;
 };
 
-// Update token - returns a promise
 const updateToken = (minValidity = 60) => {
   if (!keycloakInstance.value || !state.isAuthenticated) {
     return Promise.reject(new Error('Not authenticated'));
@@ -130,13 +136,11 @@ const updateToken = (minValidity = 60) => {
     });
 };
 
-// Computed value for token expiration
 const tokenExpired = computed(() => {
   if (!state.tokenExpiration) return true;
   return state.tokenExpiration <= Date.now();
 });
 
-// Handle token expiration
 const setupTokenRefresh = () => {
   if (!keycloakInstance.value || !state.isAuthenticated) return;
   
@@ -159,7 +163,6 @@ const setupTokenRefresh = () => {
   };
 };
 
-// Check if user has specific role
 const hasRole = (role) => {
   if (!keycloakInstance.value || !state.isAuthenticated) {
     return false;

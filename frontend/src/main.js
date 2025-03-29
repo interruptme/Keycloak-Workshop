@@ -13,18 +13,12 @@ app.use(createPinia())
 // Add Vue Router
 app.use(router)
 
-// Initialize auth service first, then mount the app
-authService.initKeycloak()
-  .then(() => {
-    // If auth initialized successfully, setup token refresh
-    if (authService.state.isAuthenticated) {
-      authService.setupTokenRefresh()
-    }
-  })
-  .catch(error => {
-    console.error('Auth service initialization failed:', error)
-  })
-  .finally(() => {
-    // Mount the app regardless of auth state
-    app.mount('#app')
-  })
+// Mount the app immediately, let the router handle auth
+app.mount('#app')
+
+// Initialize auth after app is mounted
+// This is handled by the router now, so we don't need to call it here
+// but we can set up token refresh if user is already authenticated
+if (authService.state.isAuthenticated) {
+  authService.setupTokenRefresh()
+}

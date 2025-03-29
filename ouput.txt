@@ -1,0 +1,729 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+<additional_info>
+
+</additional_info>
+
+</file_summary>
+
+<directory_structure>
+keycloak/
+  init/
+    terraform/
+      main.tf
+      providers.tf
+    docker-compose.yml
+    Dockerfile
+    init_terraform_realm.sh
+.gitignore
+docker-compose.yml
+prompt_plan.md
+README.md
+todo.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="keycloak/init/terraform/main.tf">
+resource "keycloak_realm" "demo_realm" {
+  realm             = "demo-realm"
+  enabled           = true
+  display_name      = "Demo Realm"
+  display_name_html = "<div>Demo Realm</div>"
+
+  # Security settings with PKCE enforcement
+  pkce_code_challenge_method = "S256"
+
+  # Basic security headers
+  security_defenses {
+    headers {
+      x_frame_options                     = "SAMEORIGIN"
+      content_security_policy             = "frame-src 'self'; frame-ancestors 'self'; object-src 'none';"
+      strict_transport_security           = "max-age=31536000; includeSubDomains"
+      x_content_type_options             = "nosniff"
+      x_xss_protection                   = "1; mode=block"
+    }
+  }
+
+  # Standard token lifespans
+  access_token_lifespan = "15m"
+  refresh_token_lifespan = "7d"
+}
+
+resource "keycloak_openid_client" "frontend_client" {
+  realm_id            = keycloak_realm.demo_realm.id
+  client_id           = "frontend-client"
+  name               = "Frontend Application"
+  enabled            = true
+  access_type        = "PUBLIC"
+  standard_flow_enabled = true
+  
+  # Enforce PKCE for this client
+  pkce_code_challenge_method = "S256"
+
+  # Redirect URIs - adjust these for your development and production environments
+  valid_redirect_uris = [
+    "http://localhost:5173/*",  # Vite default development port
+    "http://localhost:3000/*"   # Alternative development port
+  ]
+
+  web_origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "+"  # Allows CORS requests from redirect URIs
+  ]
+
+  # Client settings for SPA
+  full_scope_allowed = false
+  implicit_flow_enabled = false
+  direct_access_grants_enabled = false
+
+  # Browser security settings
+  base_url = "http://localhost:5173"
+  root_url = "http://localhost:5173"
+}
+
+resource "keycloak_openid_client" "backend_client" {
+  realm_id            = keycloak_realm.demo_realm.id
+  client_id           = "backend-client"
+  name               = "Backend API"
+  enabled            = true
+  access_type        = "CONFIDENTIAL"
+  standard_flow_enabled = false
+  service_accounts_enabled = true
+
+  # Client settings for API
+  full_scope_allowed = false
+  implicit_flow_enabled = false
+  direct_access_grants_enabled = false
+
+  # Client credentials
+  secret = "secret"
+}
+
+resource "keycloak_user" "test_user" {
+  realm_id = keycloak_realm.demo_realm.id
+  username = "testuser"
+  enabled  = true
+  email    = "testuser@example.com"
+  
+  first_name = "Test"
+  last_name  = "User"
+
+  initial_password {
+    value     = "1234"
+    temporary = false
+  }
+}
+</file>
+
+<file path="keycloak/init/docker-compose.yml">
+version: '3.8'
+
+services:
+  terraform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./terraform:/terraform
+    networks:
+      - keycloak-network
+
+networks:
+  keycloak-network:
+    name: keycloak-network
+    external: true
+</file>
+
+<file path="keycloak/init/init_terraform_realm.sh">
+#!/bin/bash
+set -e
+
+echo "Initializing Terraform..."
+terraform init
+
+echo "Creating Terraform plan..."
+terraform plan -out=tfplan
+
+echo "Applying Terraform plan..."
+terraform apply -auto-approve tfplan
+
+echo "Terraform execution completed successfully."
+</file>
+
+<file path="docker-compose.yml">
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: keycloak-postgres
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - keycloak-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1.3
+    container_name: keycloak-26-1-3
+    command: start-dev
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak_password
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin_password
+      KC_HEALTH_ENABLED: true
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - keycloak-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  keycloak-network:
+    name: keycloak-network
+
+volumes:
+  postgres_data:
+</file>
+
+<file path="prompt_plan.md">
+Here's a structured breakdown of iterative implementation prompts following test-driven practices:
+
+```markdown
+# Phase 1 - Core Infrastructure Setup
+
+## Prompt 1: Keycloak Docker Setup
+```
+Create a docker-compose.yml file for Keycloak with:
+- Keycloak 22+ with DB_VENDOR=postgres
+- PostgreSQL 15
+- Pre-configured admin credentials
+- Fixed ports (8080 for Keycloak)
+- Health checks
+- Include test command to verify setup using curl
+```
+
+## Prompt 2: Keycloak Realm Configuration
+```
+Create a Keycloak realm initialization script that:
+1. Creates 'demo-realm' with PKCE enforced
+2. Creates frontend client (public) with redirect URIs
+3. Creates backend client (confidential)
+4. Sets access token lifespan (15m) and refresh (7d)
+5. Includes test user with test credentials
+6. Outputs realm configuration as JSON
+Include verification steps using kcadm.sh
+```
+
+# Phase 2 - Frontend Foundation
+
+## Prompt 3: Vue Auth Service
+```
+Create Vue 3 service using @vue/reactivity:
+1. Install @keycloak/keycloak-js
+2. Implement reactive auth store with:
+   - isAuthenticated
+   - userProfile
+   - authError
+3. Methods for init, login, handleCallback, logout
+4. Memory-based token storage (no localStorage)
+5. Unit tests mocking Keycloak JS
+```
+
+## Prompt 4: Auth Guard Component
+```
+Create Vue router guard that:
+1. Checks authentication status
+2. Redirects unauthenticated users to login
+3. Handles callback route for Keycloak redirect
+4. Manages route meta.requiresAuth
+5. Unit test with mocked auth states
+```
+
+# Phase 3 - Backend Security
+
+## Prompt 5: .NET JWT Validation
+```
+Create JWT validation setup in .NET 8:
+1. Add Microsoft.IdentityModel.Protocols.OpenIdConnect
+2. Configure JwtBearerOptions to:
+   - Use Keycloak issuer
+   - Get JWKS dynamically
+   - Validate audience/issuer
+3. Add test endpoint returning token claims
+4. Unit test with valid/invalid tokens
+```
+
+## Prompt 6: Protected Endpoint
+```
+Create protected controller with:
+1. [Authorize] attribute
+2. Claims inspection endpoint
+3. Role-based policy (if needed)
+4. Custom 401/403 handling
+5. Integration tests with TestServer
+```
+
+# Phase 4 - Integration
+
+## Prompt 7: Token Refresh Flow
+```
+Implement frontend token refresh:
+1. Axios interceptor checking token expiration
+2. Silent refresh using refresh_token
+3. Error handling for refresh failures
+4. Unit tests for expiration scenarios
+5. Integration with auth service
+```
+
+## Prompt 8: API Service Integration
+```
+Create API service in Vue that:
+1. Attaches Authorization header
+2. Handles 401 responses
+3. Retries failed requests after refresh
+4. Global error handling
+5. Unit tests with mocked API responses
+```
+
+# Phase 5 - Security Hardening
+
+## Prompt 9: Security Headers
+```
+Add security middleware to .NET:
+1. Strict CSP headers
+2. HSTS enforcement
+3. X-Content-Type-Options
+4. Content-Security-Policy
+5. Test with SecurityHeaders.com scan
+```
+
+## Prompt 10: Audit Logging
+```
+Implement structured logging:
+1. Frontend auth events
+2. Backend token validation results
+3. Sensitive action tracking
+4. Correlation IDs
+5. Integration with monitoring
+```
+
+# Phase 6 - Final Integration
+
+## Prompt 11: End-to-End Flow
+```
+Create main application component with:
+1. Login/Logout buttons
+2. Token status display
+3. Protected content area
+4. Error display handling
+5. Full integration tests
+```
+
+## Prompt 12: Deployment Setup
+```
+Create production Docker setup with:
+1. Frontend static build
+2. Backend optimized image
+3. Keycloak production config
+4. HTTPS configuration
+5. Health check endpoints
+```
+```
+
+Each prompt builds on previous steps and includes testing requirements. Implementation should follow this order with validation at each stage before proceeding to next prompt.
+</file>
+
+<file path="keycloak/init/terraform/providers.tf">
+terraform {
+  required_providers {
+    keycloak = {
+      source  = "keycloak/keycloak"
+      version = "~> 5.0.0"
+    }
+  }
+}
+
+provider "keycloak" {
+  client_id     = "admin-cli"
+  username      = "admin"
+  password      = "admin_password"
+  url           = "http://keycloak-26-1-3:8080"
+  initial_login = true
+}
+</file>
+
+<file path=".gitignore">
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Exclude all .tfvars files, which are likely to contain sensitive data
+*.tfvars
+*.tfvars.json
+
+# Ignore override files as they are usually used for local development
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# Ignore lock files
+.terraform.lock.hcl
+
+# Ignore provider binary
+terraform-provider-*
+
+# Ignore plan files
+*tfplan*
+*.plan
+
+# Log files
+*.log
+
+# Directory-based project format
+.idea/
+*.iml
+
+# VS Code settings
+.vscode/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+</file>
+
+<file path="README.md">
+## Configuring Keycloak
+
+### Initialize Keycloak Authentication Service
+
+This section contains commands to set up and start the Keycloak authentication service using Docker Compose.
+
+The sequence of commands:
+1. Navigate to the Keycloak directory
+2. Enter the initialization directory
+3. Build and start the Docker containers using Docker Compose
+
+#### Prerequisites:
+- Docker installed
+- Docker Compose installed
+- Keycloak configuration files in place
+
+#### Note:
+The `--build` flag ensures that Docker images are rebuilt if there are any changes to the configuration.
+
+```bash
+cd keycloak
+cd init
+docker-compose up --build
+```
+</file>
+
+<file path="todo.md">
+<img src="https://r2cdn.perplexity.ai/pplx-full-logo-primary-dark%402x.png" class="logo" width="120"/>
+
+# 
+
+---
+
+# Can you make a `todo.md` that I can use as a checklist? Be thorough.
+
+```markdown
+# Keycloak Authentication Integration Checklist
+
+## Pre-Implementation
+- [x] Install Docker & Docker Compose
+- [x] Set up Node.js 18+ environment
+- [x] Install .NET 8 SDK
+- [x] Create project directories:
+  - `/frontend` (Vue.js)
+  - `/backend` (.NET)
+  - `/keycloak` (config files)
+
+---
+
+## Phase 1: Core Infrastructure Setup
+
+### Keycloak Configuration
+- [x] Docker Compose file created with:
+  - PostgreSQL 15 service
+  - Keycloak 22+ service
+  - Health checks configured
+  - Fixed ports (8080:8080)
+- [x] Verify Keycloak accessibility:
+```
+
+curl http://localhost:8080/health/ready
+
+```
+- [ ] Realm initialization script created with:
+- demo-realm configuration
+- Frontend (public) and backend (confidential) clients
+- Test user `testuser:testpass`
+- [ ] Verify realm setup using kcadm.sh:
+```
+
+kcadm.sh get realms/demo-realm --fields realm
+
+```
+
+---
+
+## Phase 2: Frontend Foundation
+
+### Authentication Service
+- [ ] Install required packages:
+- `@keycloak/keycloak-js`
+- `@vue/reactivity`
+- [ ] Create `auth.service.js` with:
+- Reactive store implementation
+- PKCE flow handlers
+- In-memory token storage
+- [ ] Write unit tests covering:
+- Successful login flow
+- Token expiration handling
+- Error states
+
+### Router Guard
+- [ ] Create navigation guard with:
+- Authentication check
+- Route meta handling
+- Callback route processing
+- [ ] Test guard behavior with:
+- Authenticated user
+- Unauthenticated user
+- Expired token scenario
+
+---
+
+## Phase 3: Backend Security
+
+### JWT Validation
+- [ ] Add NuGet packages:
+- `Microsoft.AspNetCore.Authentication.JwtBearer`
+- `Microsoft.IdentityModel.Protocols.OpenIdConnect`
+- [ ] Configure services with:
+- Valid issuer URL
+- JWKS endpoint integration
+- Audience validation
+- [ ] Create test endpoint:
+```
+
+[HttpGet("claims")]
+public IActionResult GetClaims() => Ok(User.Claims);
+
+```
+
+### Protected Endpoints
+- [ ] Implement `[Authorize]` controller
+- [ ] Create policies for:
+- Authentication requirement
+- Role-based access (if needed)
+- [ ] Write integration tests for:
+- Valid token access
+- Invalid token rejection
+- Expired token handling
+
+---
+
+## Phase 4: Integration
+
+### Token Refresh
+- [ ] Implement Axios interceptor:
+- Token expiration check
+- Silent refresh mechanism
+- Request retry logic
+- [ ] Test refresh flow:
+- Successful token renewal
+- Failed refresh → logout
+- Concurrent request handling
+
+### API Service
+- [ ] Create API client with:
+- Automatic header injection
+- 401 response handling
+- Error state management
+- [ ] Verify with:
+- Valid token requests
+- Invalid token requests
+- Network error simulation
+
+---
+
+## Phase 5: Security Hardening
+
+### Headers Middleware
+- [ ] Implement security headers:
+- Content-Security-Policy
+- Strict-Transport-Security
+- X-Content-Type-Options
+- [ ] Verify using:
+```
+
+curl -I http://localhost:5000
+
+```
+
+### Audit Logging
+- [ ] Add structured logging for:
+- Authentication attempts
+- Token validation results
+- Authorization decisions
+- [ ] Test log capture for:
+- Successful login
+- Failed token validation
+- Permission denied event
+
+---
+
+## Phase 6: Final Integration
+
+### UI Components
+- [ ] Create login/logout UI
+- [ ] Implement token status display
+- [ ] Build protected content area
+- [ ] Add error display component
+- [ ] Write end-to-end tests covering:
+- Full authentication flow
+- Token refresh scenario
+- Error state recovery
+
+### Deployment Prep
+- [ ] Create production Dockerfiles:
+- Vue static build
+- .NET optimized image
+- Keycloak with TLS
+- [ ] Configure environment variables:
+- Keycloak URLs
+- Client secrets
+- JWT validation settings
+- [ ] Set up health checks:
+- Frontend: `/healthz`
+- Backend: `/hc`
+- Keycloak: `/health/ready`
+
+---
+
+## Post-Implementation
+- [ ] Verify all unit tests pass
+- [ ] Run end-to-end test suite
+- [ ] Perform security audit:
+- Check for token leakage
+- Validate storage mechanisms
+- Verify HTTPS enforcement
+- [ ] Update documentation:
+- Setup instructions
+- Environment configuration
+- Troubleshooting guide
+- [ ] Create demo user flow:
+- Public → Login → Protected → Logout
+```
+
+This checklist follows an incremental implementation path with verification steps at each stage. Mark items as complete only after:
+
+1. Implementation done
+2. Tests written
+3. Manual verification performed
+4. Cross-component integration validated
+</file>
+
+<file path="keycloak/init/Dockerfile">
+FROM hashicorp/terraform:latest
+
+# Install dependencies for the Keycloak provider
+RUN apk add --no-cache curl jq bash
+
+# Set working directory
+WORKDIR /terraform
+
+# Create a volume mount point
+VOLUME ["/terraform"]
+
+# Copy a script to initialize, plan, and apply the Terraform configuration
+COPY init_terraform_realm.sh /init_terraform_realm.sh
+RUN chmod +x /init_terraform_realm.sh
+
+# Label for the network configuration
+LABEL network="keycloak-network"
+
+# Set entrypoint
+ENTRYPOINT ["/init_terraform_realm.sh"]
+</file>
+
+</files>
