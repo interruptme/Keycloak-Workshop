@@ -223,6 +223,7 @@ const hasRole = (role) => {
 
 export default {
   state,
+  keycloakInstance, // Expose the Keycloak instance
   initKeycloak,
   login,
   logout,
