@@ -10,7 +10,10 @@ const state = reactive({
   authError: null,
   keycloakReady: false,
   tokenExpiration: null,
-  initializing: false
+  initializing: false,
+  profileLoadRetries: 0,
+  maxProfileLoadRetries: 3,
+  profileLoadingStatus: null
 });
 
 // Initialize Keycloak instance
@@ -61,8 +64,8 @@ const initKeycloak = () => {
     });
 };
 
-// Load user profile with error handling specifically for CORS issues
-const loadUserProfile = () => {
+// Load user profile with error handling and retry mechanism
+const loadUserProfile = (retryCount = 0) => {
   if (!keycloakInstance.value || !state.isAuthenticated) {
     return Promise.reject(new Error('Not authenticated'));
   }
@@ -71,11 +74,16 @@ const loadUserProfile = () => {
   if (state.userProfile) {
     return Promise.resolve(state.userProfile);
   }
+  
+  // Update loading status
+  state.profileLoadingStatus = `Attempt ${retryCount + 1}/${state.maxProfileLoadRetries + 1}`;
+  state.profileLoadRetries = retryCount;
 
   // First method: Try to use the userinfo endpoint directly
   return getUserInfoFromToken()
     .then(profile => {
       state.userProfile = profile;
+      state.profileLoadingStatus = 'success';
       return profile;
     })
     .catch(error => {
@@ -85,11 +93,26 @@ const loadUserProfile = () => {
       return keycloakInstance.value.loadUserProfile()
         .then(profile => {
           state.userProfile = profile;
+          state.profileLoadingStatus = 'success';
           return profile;
         })
         .catch(error => {
-          console.error('Error loading user profile via Keycloak API', error);
-          throw error;
+          console.error(`Error loading user profile (attempt ${retryCount + 1})`, error);
+          
+          // Implement retry with exponential backoff
+          if (retryCount < state.maxProfileLoadRetries) {
+            const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+            state.profileLoadingStatus = `Retrying in ${delay/1000}s...`;
+            
+            return new Promise(resolve => {
+              setTimeout(() => {
+                resolve(loadUserProfile(retryCount + 1));
+              }, delay);
+            });
+          } else {
+            state.profileLoadingStatus = 'failed';
+            throw error;
+          }
         });
     });
 };
