@@ -40,6 +40,7 @@ const initKeycloak = () => {
       checkLoginIframe: false,
       silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
       silentCheckSsoFallback: false,
+      scope: 'openid profile backend-access'
     })
     .then((authenticated) => {
       state.isAuthenticated = authenticated;

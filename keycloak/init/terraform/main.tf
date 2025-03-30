@@ -85,3 +85,49 @@ resource "keycloak_user" "test_user" {
     temporary = false
   }
 }
+
+# Create a client scope for the backend client
+resource "keycloak_openid_client_scope" "backend_access_scope" {
+  realm_id               = keycloak_realm.demo_realm.id
+  name                   = "backend-access"
+  description            = "Adds the backend service as an audience to the token"
+  include_in_token_scope = true
+  gui_order              = 1
+}
+
+# Add the audience mapper to this scope
+resource "keycloak_openid_audience_protocol_mapper" "backend_audience_mapper" {
+  realm_id        = keycloak_realm.demo_realm.id
+  client_scope_id = keycloak_openid_client_scope.backend_access_scope.id
+  name            = "backend-audience"
+  
+  # Reference the backend client directly as the audience
+  included_client_audience = keycloak_openid_client.backend_client.client_id
+  
+  # Set to add to access token only
+  add_to_access_token     = true
+  add_to_id_token         = false
+}
+
+# Assign it as an optional scope, so it has to be requested 
+resource "keycloak_openid_client_optional_scopes" "frontend_default_scopes" {
+  realm_id  = keycloak_realm.demo_realm.id
+  client_id = keycloak_openid_client.frontend_client.id
+  
+  optional_scopes = [
+    keycloak_openid_client_scope.backend_access_scope.name,
+  ]
+}
+
+# Also assign the default scopes to the frontend client 
+resource "keycloak_openid_client_default_scopes" "frontend_default_scopes" {
+  realm_id  = keycloak_realm.demo_realm.id
+  client_id = keycloak_openid_client.frontend_client.id
+  
+  default_scopes = [
+    "email",
+    "profile",
+    "roles",
+    "web-origins",
+  ]
+}
