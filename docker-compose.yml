@@ -3,7 +3,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15
-    container_name: keycloak-postgres
+    container_name: keycloak-demo-postgres-for-keycloak
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
@@ -37,7 +37,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: simple-api-backend
+    container_name: keycloak-demo-backend
     ports:
       - "5000:5000"
     environment:
@@ -55,7 +55,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: vue-frontend
+    container_name: keycloak-demo-frontend
     ports:
       - "5173:80"
     environment:
