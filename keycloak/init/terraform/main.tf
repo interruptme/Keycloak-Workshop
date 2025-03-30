@@ -36,12 +36,10 @@ resource "keycloak_openid_client" "frontend_client" {
   # Redirect URIs - adjust these for your development and production environments
   valid_redirect_uris = [
     "http://localhost:5173/*",  # Vite default development port
-    "http://localhost:3000/*"   # Alternative development port
   ]
 
   web_origins = [
     "http://localhost:5173",
-    "http://localhost:3000",
     "+"  # Allows CORS requests from redirect URIs
   ]
 
