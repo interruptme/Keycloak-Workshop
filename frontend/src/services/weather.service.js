@@ -66,8 +66,11 @@ const fetchWeather = async () => {
     
     // Set appropriate error message based on error type
     if (err.response) {
-      // Server responded with error status
-      state.error = `Server error: ${err.response.status} ${err.response.statusText}`;
+      if (err.response.status === 401) {
+        state.error = 'Weather forecast service is only available for logged in users';
+      } else {
+        state.error = `Server error: ${err.response.status} ${err.response.statusText}`;
+      }
     } else if (err.request) {
       // Request was made but no response received
       state.error = 'No response from weather service. Please check your connection.';
