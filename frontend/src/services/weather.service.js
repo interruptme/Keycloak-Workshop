@@ -118,7 +118,7 @@ const getWeatherIconClass = (summary) => {
     return 'rainy';
   } else if (lowerSummary.includes('cloud')) {
     return 'cloudy';
-  } else if (lowerSummary.includes('snow') || lowerSummary.includes('freez') || lowerSummary.includes('cold')) {
+  } else if (lowerSummary.includes('snow') || lowerSummary.includes('freez') || lowerSummary.includes('cold') || lowerSummary.includes('cool')) {
     return 'snowy';
   } else if (lowerSummary.includes('wind')) {
     return 'windy';

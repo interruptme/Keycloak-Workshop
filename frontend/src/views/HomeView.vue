@@ -171,7 +171,7 @@ onMounted(() => {
 .rainy {
   background-color: #90caf9;
   box-shadow: 0 0 15px rgba(144, 202, 249, 0.7);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230277bd'%3E%3Cpath d='M13 9.5h5v2h-5v-2zm-7 0h5v2H6v-2zm1 5h9v2H7v-2zm10-9.95v-2.5h-3v1.5c0 .28.22.5.5.5h2.5zm-13 0c0-.28.22-.5.5-.5h2.5v-2.5h-3v3zm16 .95h-3V2.5h3v3zm0 13h-3v-3h3v3zM11 2.5h2v3h-2v-3zm2 19h-2v-3h2v3zm-7-3H3v-3h3v3zm0-13H3v-3h3v3z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23607D8B' d='M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z'/%3E%3Cpath fill='%2382B1FF' d='M3.5 18.5v-1.5M6.5 20v-1.5M9.5 18.5v-1.5M12.5 20v-1.5M15.5 18.5v-1.5M18.5 20v-1.5'/%3E%3Cpath stroke='%2382B1FF' stroke-width='1.5' stroke-linecap='round' d='M3.5 18.5v1.5M6.5 20v1.5M9.5 18.5v1.5M12.5 20v1.5M15.5 18.5v1.5M18.5 20v1.5'/%3E%3C/svg%3E");
 }
 
 .cloudy {
@@ -187,9 +187,9 @@ onMounted(() => {
 }
 
 .windy {
-  background-color: #cfd8dc;
-  box-shadow: 0 0 15px rgba(207, 216, 220, 0.7);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2378909c'%3E%3Cpath d='M3.5 18.94l1.06-1.06L3 16.5l1.06-1.06L2.5 13.88l1.06-1.06L2 11.25l1.06-1.06L1.5 8.62l1.06-1.06L1 6l1.06-1.06L.5 3.38l.56-.56c.31-.31.85-.56 1.31-.56H21c.55 0 1 .45 1 1s-.45 1-1 1H10v2h9c.55 0 1 .45 1 1s-.45 1-1 1H7v2h7c.55 0 1 .45 1 1s-.45 1-1 1H5v2h7c.55 0 1 .45 1 1s-.45 1-1 1H3c-.55 0-1 .45-1 1s.45 1 1 1h9c.55 0 1 .45 1 1s-.45 1-1 1H4.5l-.94.94z'/%3E%3C/svg%3E");
+  background-color: #e0e0e0;
+  box-shadow: 0 0 15px rgba(224, 224, 224, 0.7);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2381D4FA' d='M3,8a1,1,0,0,1,1-1H17a2,2,0,0,0,0-4,2,2,0,0,0-2,2H13a4,4,0,0,1,8,0,4,4,0,0,1-4,4H4A1,1,0,0,1,3,8Z'/%3E%3Cpath fill='%2381D4FA' d='M4,14h9a2,2,0,0,0,0-4H12a4,4,0,0,1,2-1h1a4,4,0,0,1,0,8H4a1,1,0,0,1,0-2Z'/%3E%3Cpath fill='%2381D4FA' d='M19,17H6a1,1,0,0,0,0,2H19a1,1,0,0,0,0-2Z'/%3E%3C/svg%3E");
 }
 
 .default {

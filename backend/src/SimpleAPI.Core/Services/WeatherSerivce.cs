@@ -4,12 +4,6 @@ namespace SimpleAPI.Core.Services;
 
 public class WeatherService : IWeatherService
 {
-  private static readonly string[] Summaries = new[]
-  {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", 
-    "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-  };
-
   public Task<WeatherForecast> GetForecastAsync()
   {
     var random = new Random();
@@ -17,7 +11,7 @@ public class WeatherService : IWeatherService
     {
       Date = DateOnly.FromDateTime(DateTime.Now),
       TemperatureC = random.Next(-20, 55),
-      Summary = Summaries[random.Next(Summaries.Length)]
+      Summary = WeatherForecast.Summaries[random.Next(WeatherForecast.Summaries.Length)]
     };
     return Task.FromResult(forecast);
   }
