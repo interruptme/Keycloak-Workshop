@@ -1,4 +1,5 @@
 using FastEndpoints;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using SimpleAPI.Core.Model;
@@ -11,6 +12,7 @@ public class GetWeatherForecastResponse
   public WeatherForecast Forecast { get; set; } = new();
 }
 
+[Authorize]
 internal class GetWeatherForecastEndpoint : 
   EndpointWithoutRequest<GetWeatherForecastResponse>
 {
@@ -24,7 +26,6 @@ internal class GetWeatherForecastEndpoint :
   public override void Configure()
   {
     Get("/weather");
-    AllowAnonymous();
   }
 
   public override async Task HandleAsync(CancellationToken cancellationToken = default)
