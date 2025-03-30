@@ -45,7 +45,7 @@ services:
       ASPNETCORE_URLS: "http://+:5000"
       Keycloak__BaseUrl: http://keycloak:8080
       Keycloak__Realm: demo-realm
-      CORS__AllowedOrigins: "http://localhost:5173"
+      CORS__AllowedOrigins: "http://localhost:5173,http://keycloak-demo-frontend"
     networks:
       - keycloak-network
     depends_on:

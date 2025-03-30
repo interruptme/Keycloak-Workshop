@@ -11,6 +11,12 @@ RUN npm install
 # Copy project files
 COPY . .
 
+# Set environment variables for the build
+ENV VITE_API_URL=http://localhost:5000
+ENV VITE_KEYCLOAK_URL=http://localhost:8080
+ENV VITE_KEYCLOAK_REALM=demo-realm
+ENV VITE_KEYCLOAK_CLIENT_ID=frontend-client
+
 # Build the app
 RUN npm run build
 
