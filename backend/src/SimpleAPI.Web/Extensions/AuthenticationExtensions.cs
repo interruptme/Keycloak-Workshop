@@ -34,10 +34,21 @@ public static class AuthenticationExtensions
             // Only disable HTTPS requirement in Development environment
             options.RequireHttpsMetadata = !environment.IsDevelopment();
             
-            // Validate token parameters
+            // Configure token validation parameters
+            var validIssuers = new[]
+            {
+                $"{keycloakUrl}/realms/{realm}",
+            };
+            if (environment.IsDevelopment())
+            {
+                // Convert to list, add new item, convert back to array
+                validIssuers = validIssuers.Concat(new[] { $"http://localhost:8080/realms/{realm}" }).ToArray();
+                Console.WriteLine("Development environment detected. Added localhost issuer.");
+            }
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
+                ValidIssuers = validIssuers,
                 ValidateAudience = true,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
@@ -48,14 +59,7 @@ public static class AuthenticationExtensions
             {
                 OnAuthenticationFailed = context =>
                 {
-                    // Only modify the response if headers haven't been sent yet
-                    if (!context.Response.HasStarted)
-                    {
-                        context.NoResult();
-                        context.Response.StatusCode = 401;
-                        context.Response.ContentType = "text/plain";
-                        return context.Response.WriteAsync($"Authentication failed: {context.Exception.Message}");
-                    }
+                    Console.WriteLine("Authentication failed: " + context.Exception.Message);
                     return Task.CompletedTask;
                 },
                 OnTokenValidated = context =>
