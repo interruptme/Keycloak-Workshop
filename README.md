@@ -103,7 +103,7 @@ Or if you are going to be making modifications to the SimpleAPI.Web project and 
 ```bash
 cd backend/src/SimpleAPI.Web
 dotnet restore
-dotnet watch run --project src/SimpleAPI.Web/SimpleAPI.Web.csproj        
+dotnet watch run --project SimpleAPI.Web.csproj        
 ```
 
 The backend API will be available at http://localhost:5000.
