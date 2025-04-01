@@ -44,8 +44,8 @@
 
 <script setup>
 import { computed, onMounted } from 'vue'
-import authService from '../services/auth.service'
-import weatherService from '../services/weather.service'
+import authService from '@/services/auth.service'
+import weatherService from '@/services/weather.service'
 
 // Auth state
 const isAuthenticated = computed(() => authService.state.isAuthenticated)

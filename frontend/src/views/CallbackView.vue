@@ -10,7 +10,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import authService from '../services/auth.service'
+import authService from '@/services/auth.service'
 
 const router = useRouter()
 const route = useRoute()

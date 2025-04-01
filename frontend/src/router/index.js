@@ -1,30 +1,27 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import LoginView from '../views/LoginView.vue'
-import ProfileView from '../views/ProfileView.vue'
-import authService from '../services/auth.service.js'
+import authService from '@/services/auth.service.js'
 
 const routes = [
   {
     path: '/',
     name: 'home',
-    component: HomeView
+    component: () => import('@/views/HomeView.vue')
   },
   {
     path: '/login',
     name: 'login',
-    component: LoginView
+    component: () => import('@/views/LoginView.vue')
   },
   {
     path: '/profile',
     name: 'profile',
-    component: ProfileView,
+    component: () => import('@/views/ProfileView.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/callback',
     name: 'callback',
-    component: () => import('../views/CallbackView.vue')
+    component: () => import('@/views/CallbackView.vue')
   }
 ]
 

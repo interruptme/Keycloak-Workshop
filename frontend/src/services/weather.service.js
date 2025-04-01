@@ -1,6 +1,6 @@
 // src/services/weather.service.js
 import axios from 'axios';
-import authService from './auth.service';
+import authService from '@/services/auth.service'
 import { ref, reactive } from 'vue';
 
 // Create state for weather data

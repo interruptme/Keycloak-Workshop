@@ -106,7 +106,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import authService from '../services/auth.service'
+import authService from '@/services/auth.service'
 
 const isLoading = ref(true)
 const showFullAccessToken = ref(false)
