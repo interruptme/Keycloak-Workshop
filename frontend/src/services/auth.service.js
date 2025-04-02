@@ -1,15 +1,15 @@
-import keycloakProvider from '@/providers/auth/KeycloakProvider';
+import { defaultProvider, ProviderType, getAuthProvider } from '@/providers/auth';
 
 /**
  * Auth Service
  * 
  * This service provides a consistent authentication API for the application.
- * It uses an auth provider (currently Keycloak) that can be swapped out for another
- * implementation as long as it satisfies the auth interface.
+ * It uses an auth provider that can be swapped out for another implementation
+ * as long as it satisfies the auth interface.
  */
 
-// Use the current auth provider
-const authProvider = keycloakProvider;
+// Use the configured auth provider
+const authProvider = defaultProvider;
 
 /**
  * Initialize the auth provider
