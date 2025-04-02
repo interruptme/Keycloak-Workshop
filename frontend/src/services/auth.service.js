@@ -1,15 +1,11 @@
-import { defaultProvider, ProviderType, getAuthProvider } from '@/providers/auth';
+import authProvider from '@/providers/auth';
 
 /**
  * Auth Service
  * 
  * This service provides a consistent authentication API for the application.
- * It uses an auth provider that can be swapped out for another implementation
- * as long as it satisfies the auth interface.
+ * It uses the OIDC auth provider that implements the AuthProvider interface.
  */
-
-// Use the configured auth provider
-const authProvider = defaultProvider;
 
 /**
  * Initialize the auth provider
