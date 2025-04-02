@@ -120,56 +120,26 @@ const userProfile = computed(() => authService.state.userProfile)
 // Check if authenticated
 const isAuthenticated = computed(() => authService.state.isAuthenticated)
 
-// Check which provider is being used
-const isKeycloakProvider = computed(() => 
-  authService.provider.keycloakInstance !== undefined
-)
-
-const isOidcProvider = computed(() => 
-  authService.provider._userManager !== undefined
-)
-
 // Get the three tokens from auth provider
 const accessToken = computed(() => {
-  if (!authService.state.isAuthenticated) {
+  if (!authService.state.isAuthenticated || !authService.provider._user.value) {
     return 'Not available';
   }
-  
-  if (isKeycloakProvider.value && authService.provider.keycloakInstance.value) {
-    return authService.provider.keycloakInstance.value.token || 'Not available';
-  } else if (isOidcProvider.value && authService.provider._user.value) {
-    return authService.provider._user.value.access_token || 'Not available';
-  }
-  
-  return 'Not available';
+  return authService.provider._user.value.access_token || 'Not available';
 })
 
 const refreshTokenValue = computed(() => {
-  if (!authService.state.isAuthenticated) {
+  if (!authService.state.isAuthenticated || !authService.provider._user.value) {
     return 'Not available';
   }
-  
-  if (isKeycloakProvider.value && authService.provider.keycloakInstance.value) {
-    return authService.provider.keycloakInstance.value.refreshToken || 'Not available';
-  } else if (isOidcProvider.value && authService.provider._user.value) {
-    return authService.provider._user.value.refresh_token || 'Not available';
-  }
-  
-  return 'Not available';
+  return authService.provider._user.value.refresh_token || 'Not available';
 })
 
 const idToken = computed(() => {
-  if (!authService.state.isAuthenticated) {
+  if (!authService.state.isAuthenticated || !authService.provider._user.value) {
     return 'Not available';
   }
-  
-  if (isKeycloakProvider.value && authService.provider.keycloakInstance.value) {
-    return authService.provider.keycloakInstance.value.idToken || 'Not available';
-  } else if (isOidcProvider.value && authService.provider._user.value) {
-    return authService.provider._user.value.id_token || 'Not available';
-  }
-  
-  return 'Not available';
+  return authService.provider._user.value.id_token || 'Not available';
 })
 
 // Check if refresh token is a JWT (it usually is in Keycloak)

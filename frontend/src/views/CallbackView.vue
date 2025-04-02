@@ -23,61 +23,13 @@ onMounted(async () => {
       await authService.initialize()
     }
     
-    // Check if we are using the OIDC provider
-    if (authService.provider._userManager) {
-      // OIDC provider - handle the callback using OIDC client
-      statusMessage.value = 'Processing OIDC callback...'
-      try {
-        console.log('Processing OIDC callback');
-        // Process the authentication response
-        await authService.provider.handleLoginCallback()
-        
-        statusMessage.value = 'Login successful, redirecting...'
-        
-        // If profile not loaded, load it
-        if (!authService.state.userProfile) {
-          await authService.loadUserProfile()
-        }
-        
-        // Set up token refresh
-        authService.setupTokenRefresh()
-        
-        // Redirect to target location or home
-        setTimeout(() => {
-          const redirectPath = route.query.redirect || '/'
-          router.push(redirectPath)
-        }, 1000)
-      } catch (oidcError) {
-        console.error('OIDC callback processing error', oidcError)
-        statusMessage.value = 'Authentication failed: ' + (oidcError.message || 'Unknown error')
-        setTimeout(() => {
-          router.push('/login')
-        }, 2000)
-      }
-    } else {
-      // Keycloak provider - check URL and validate authentication
-      const urlParams = new URLSearchParams(window.location.search)
-      const code = urlParams.get('code')
+    // Handle the OIDC callback
+    statusMessage.value = 'Processing OIDC callback...'
+    try {
+      console.log('Processing OIDC callback');
+      // Process the authentication response
+      await authService.provider.handleLoginCallback()
       
-      if (!code) {
-        statusMessage.value = 'Error: No authentication code found in URL'
-        setTimeout(() => {
-          router.push('/login')
-        }, 2000)
-        return
-      }
-      
-      // For Keycloak JS, the code exchange is handled by the library
-      // Just validate that auth is working
-      if (!authService.state.isAuthenticated) {
-        statusMessage.value = 'Error: Authentication failed'
-        setTimeout(() => {
-          router.push('/login')
-        }, 2000)
-        return
-      }
-      
-      // Authentication successful
       statusMessage.value = 'Login successful, redirecting...'
       
       // If profile not loaded, load it
@@ -93,6 +45,12 @@ onMounted(async () => {
         const redirectPath = route.query.redirect || '/'
         router.push(redirectPath)
       }, 1000)
+    } catch (oidcError) {
+      console.error('OIDC callback processing error', oidcError)
+      statusMessage.value = 'Authentication failed: ' + (oidcError.message || 'Unknown error')
+      setTimeout(() => {
+        router.push('/login')
+      }, 2000)
     }
   } catch (error) {
     console.error('Error processing callback', error)

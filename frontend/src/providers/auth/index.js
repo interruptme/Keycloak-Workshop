@@ -1,34 +1,21 @@
-import keycloakProvider from './KeycloakProvider';
 import oidcProvider from './OidcProvider';
 
 /**
  * Auth Provider Type Enum
  */
 export const ProviderType = {
-  KEYCLOAK: 'keycloak',
   OIDC: 'oidc'
 };
 
 /**
- * Get the appropriate auth provider based on configuration
- * 
- * @param {string} type - Provider type from ProviderType enum
+ * Get the auth provider
  * @returns Auth provider instance
  */
-export const getAuthProvider = (type = null) => {
-  // If type is not specified, use the environment variable or default to keycloak
-  const providerType = type || import.meta.env.VITE_AUTH_PROVIDER || ProviderType.KEYCLOAK;
-  
-  switch (providerType.toLowerCase()) {
-    case ProviderType.OIDC:
-      return oidcProvider;
-    case ProviderType.KEYCLOAK:
-    default:
-      return keycloakProvider;
-  }
+export const getAuthProvider = () => {
+  return oidcProvider;
 };
 
 /**
- * The default auth provider based on environment configuration
+ * The default auth provider
  */
-export const defaultProvider = getAuthProvider();
+export const defaultProvider = oidcProvider;
