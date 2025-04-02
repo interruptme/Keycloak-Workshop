@@ -55,22 +55,32 @@ class OidcProvider extends AuthProviderInterface {
    * @private
    */
   _createUserManager() {
+    const authority = import.meta.env.VITE_OIDC_AUTHORITY || 
+                    `${import.meta.env.VITE_KEYCLOAK_URL}/realms/${import.meta.env.VITE_KEYCLOAK_REALM}`;
+                    
+    // Set up the UserManager settings                
     const settings = {
-      authority: import.meta.env.VITE_OIDC_AUTHORITY || import.meta.env.VITE_KEYCLOAK_URL + '/realms/' + import.meta.env.VITE_KEYCLOAK_REALM,
+      authority: authority,
       client_id: import.meta.env.VITE_OIDC_CLIENT_ID || import.meta.env.VITE_KEYCLOAK_CLIENT_ID,
-      redirect_uri: import.meta.env.VITE_OIDC_REDIRECT_URI || window.location.origin + '/callback',
+      redirect_uri: import.meta.env.VITE_OIDC_REDIRECT_URI || `${window.location.origin}/callback`,
       post_logout_redirect_uri: import.meta.env.VITE_OIDC_POST_LOGOUT_REDIRECT_URI || window.location.origin,
       response_type: 'code',
       scope: 'openid profile email',
       automaticSilentRenew: true,
       includeIdTokenInSilentRenew: true,
+      loadUserInfo: true,
+      monitorSession: true,
+      revokeAccessTokenOnSignout: true,
       userStore: new WebStorageStateStore({ store: window.localStorage }),
+      
+      // Metadata endpoints for Keycloak
       metadata: {
-        issuer: import.meta.env.VITE_OIDC_ISSUER || import.meta.env.VITE_KEYCLOAK_URL + '/realms/' + import.meta.env.VITE_KEYCLOAK_REALM,
-        authorization_endpoint: import.meta.env.VITE_OIDC_AUTHORIZATION_ENDPOINT || import.meta.env.VITE_KEYCLOAK_URL + '/realms/' + import.meta.env.VITE_KEYCLOAK_REALM + '/protocol/openid-connect/auth',
-        token_endpoint: import.meta.env.VITE_OIDC_TOKEN_ENDPOINT || import.meta.env.VITE_KEYCLOAK_URL + '/realms/' + import.meta.env.VITE_KEYCLOAK_REALM + '/protocol/openid-connect/token',
-        userinfo_endpoint: import.meta.env.VITE_OIDC_USERINFO_ENDPOINT || import.meta.env.VITE_KEYCLOAK_URL + '/realms/' + import.meta.env.VITE_KEYCLOAK_REALM + '/protocol/openid-connect/userinfo',
-        end_session_endpoint: import.meta.env.VITE_OIDC_END_SESSION_ENDPOINT || import.meta.env.VITE_KEYCLOAK_URL + '/realms/' + import.meta.env.VITE_KEYCLOAK_REALM + '/protocol/openid-connect/logout'
+        issuer: import.meta.env.VITE_OIDC_ISSUER || authority,
+        authorization_endpoint: import.meta.env.VITE_OIDC_AUTHORIZATION_ENDPOINT || `${authority}/protocol/openid-connect/auth`,
+        token_endpoint: import.meta.env.VITE_OIDC_TOKEN_ENDPOINT || `${authority}/protocol/openid-connect/token`,
+        userinfo_endpoint: import.meta.env.VITE_OIDC_USERINFO_ENDPOINT || `${authority}/protocol/openid-connect/userinfo`,
+        end_session_endpoint: import.meta.env.VITE_OIDC_END_SESSION_ENDPOINT || `${authority}/protocol/openid-connect/logout`,
+        jwks_uri: import.meta.env.VITE_OIDC_JWKS_URI || `${authority}/protocol/openid-connect/certs`
       }
     };
 
@@ -211,10 +221,16 @@ class OidcProvider extends AuthProviderInterface {
    * @returns {Promise<User>} Promise resolving to the user
    */
   handleLoginCallback() {
+    console.log('OIDC handling callback');
     return this._userManager.signinRedirectCallback()
       .then(user => {
+        console.log('OIDC received user from redirect', user);
         this._onUserLoaded(user);
         return user;
+      })
+      .catch(error => {
+        console.error('OIDC callback error', error);
+        throw error;
       });
   }
 

@@ -28,6 +28,7 @@ onMounted(async () => {
       // OIDC provider - handle the callback using OIDC client
       statusMessage.value = 'Processing OIDC callback...'
       try {
+        console.log('Processing OIDC callback');
         // Process the authentication response
         await authService.provider.handleLoginCallback()
         

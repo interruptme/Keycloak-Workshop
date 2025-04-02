@@ -56,8 +56,20 @@ const login = async () => {
     // Get redirect URL from query params or use home page
     const redirectUri = route.query.redirect || '/'
     
+    // Format redirect properly - for OIDC we need to use the callback handler
+    let finalRedirectUri;
+    
+    // Check if we're using the OIDC provider (has _userManager property)
+    if (authService.provider._userManager) {
+      // For OIDC we need to use the callback route and pass the final redirect as a query param
+      finalRedirectUri = window.location.origin + '/callback?redirect=' + encodeURIComponent(redirectUri);
+    } else {
+      // For Keycloak, we can redirect directly
+      finalRedirectUri = window.location.origin + redirectUri;
+    }
+    
     // Call login method from auth service
-    await authService.login(window.location.origin + redirectUri)
+    await authService.login(finalRedirectUri)
   } catch (error) {
     console.error('Login failed', error)
     authError.value = 'Login failed. Please try again.'
