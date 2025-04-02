@@ -12,11 +12,12 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "keycloak-js": "^26.1.4",
     "@vue/reactivity": "^3.4.19",
     "axios": "^1.6.7",
+    "keycloak-js": "^26.1.4",
+    "oidc-client-ts": "^3.2.0",
     "pinia": "^2.1.7",
-    "vue": "^3.4.19", 
+    "vue": "^3.4.19",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {
