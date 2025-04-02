@@ -34,7 +34,7 @@ onMounted(async () => {
     // For Keycloak JS, this would typically be handled by the library
     // Just validate that auth is working
     if (!authService.state.isInitialized) {
-      await authService.initKeycloak()
+      await authService.initialize()
     }
     
     if (!authService.state.isAuthenticated) {

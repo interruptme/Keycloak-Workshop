@@ -120,22 +120,22 @@ const userProfile = computed(() => authService.state.userProfile)
 // Check if authenticated
 const isAuthenticated = computed(() => authService.state.isAuthenticated)
 
-// Get the three tokens from Keycloak
+// Get the three tokens from auth provider
 const accessToken = computed(() => {
-  return authService.state.isAuthenticated && authService.keycloakInstance.value
-    ? authService.keycloakInstance.value.token || 'Not available'
+  return authService.state.isAuthenticated && authService.provider.keycloakInstance.value
+    ? authService.provider.keycloakInstance.value.token || 'Not available'
     : 'Not available'
 })
 
 const refreshTokenValue = computed(() => {
-  return authService.state.isAuthenticated && authService.keycloakInstance.value
-    ? authService.keycloakInstance.value.refreshToken || 'Not available'
+  return authService.state.isAuthenticated && authService.provider.keycloakInstance.value
+    ? authService.provider.keycloakInstance.value.refreshToken || 'Not available'
     : 'Not available'
 })
 
 const idToken = computed(() => {
-  return authService.state.isAuthenticated && authService.keycloakInstance.value
-    ? authService.keycloakInstance.value.idToken || 'Not available'
+  return authService.state.isAuthenticated && authService.provider.keycloakInstance.value
+    ? authService.provider.keycloakInstance.value.idToken || 'Not available'
     : 'Not available'
 })
 

@@ -44,9 +44,9 @@ router.beforeEach(async (to, from, next) => {
   // Initialize auth service if not already done
   if (!authService.state.isInitialized) {
     try {
-      await authService.initKeycloak();
+      await authService.initialize();
     } catch (error) {
-      console.error('Failed to initialize Keycloak', error);
+      console.error('Failed to initialize auth provider', error);
     }
   }
 
