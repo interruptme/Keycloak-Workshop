@@ -237,14 +237,6 @@ const setupTokenRefresh = () => {
   };
 };
 
-// Check if user has specific role
-const hasRole = (role) => {
-  if (!keycloakInstance.value || !state.isAuthenticated) {
-    return false;
-  }
-  return keycloakInstance.value.hasRealmRole(role);
-};
-
 export default {
   state,
   keycloakInstance, // Expose the Keycloak instance
@@ -253,7 +245,6 @@ export default {
   logout,
   getToken,
   updateToken,
-  hasRole,
   setupTokenRefresh,
   tokenExpired,
   loadUserProfile
