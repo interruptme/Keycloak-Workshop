@@ -55,13 +55,12 @@ class OidcProvider extends AuthProviderInterface {
    * @private
    */
   _createUserManager() {
-    const authority = import.meta.env.VITE_OIDC_AUTHORITY || 
-                    `${import.meta.env.VITE_KEYCLOAK_URL}/realms/${import.meta.env.VITE_KEYCLOAK_REALM}`;
+    const authority = import.meta.env.VITE_OIDC_AUTHORITY;
                     
     // Set up the UserManager settings                
     const settings = {
       authority: authority,
-      client_id: import.meta.env.VITE_OIDC_CLIENT_ID || import.meta.env.VITE_KEYCLOAK_CLIENT_ID,
+      client_id: import.meta.env.VITE_OIDC_CLIENT_ID,
       redirect_uri: import.meta.env.VITE_OIDC_REDIRECT_URI || `${window.location.origin}/callback`,
       post_logout_redirect_uri: import.meta.env.VITE_OIDC_POST_LOGOUT_REDIRECT_URI || window.location.origin,
       response_type: 'code',
@@ -73,7 +72,7 @@ class OidcProvider extends AuthProviderInterface {
       revokeAccessTokenOnSignout: true,
       userStore: new WebStorageStateStore({ store: window.localStorage }),
       
-      // Metadata endpoints for Keycloak
+      // Metadata endpoints
       metadata: {
         issuer: import.meta.env.VITE_OIDC_ISSUER || authority,
         authorization_endpoint: import.meta.env.VITE_OIDC_AUTHORIZATION_ENDPOINT || `${authority}/protocol/openid-connect/auth`,
