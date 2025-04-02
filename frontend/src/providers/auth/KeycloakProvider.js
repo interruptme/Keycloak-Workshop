@@ -1,15 +1,18 @@
 import Keycloak from 'keycloak-js';
 import { ref, reactive, computed } from '@vue/reactivity';
+import AuthProviderInterface from '@/interfaces/auth/AuthProvider';
 
 /**
  * Keycloak Authentication Provider
  * Implements the auth interface using Keycloak
  */
-class KeycloakProvider {
+class KeycloakProvider extends AuthProviderInterface {
   constructor() {
+    super();
+    
     // Create reactive state
-    this.keycloakInstance = ref(null);
-    this.state = reactive({
+    this._keycloakInstance = ref(null);
+    this._state = reactive({
       isAuthenticated: false,
       isInitialized: false,
       userProfile: null,
@@ -23,10 +26,32 @@ class KeycloakProvider {
     });
 
     // Create computed property for token expiration
-    this.tokenExpired = computed(() => {
-      if (!this.state.tokenExpiration) return true;
-      return this.state.tokenExpiration <= Date.now();
+    this._tokenExpired = computed(() => {
+      if (!this._state.tokenExpiration) return true;
+      return this._state.tokenExpiration <= Date.now();
     });
+  }
+
+  /**
+   * @returns {Object} Reactive state object
+   */
+  get state() {
+    return this._state;
+  }
+
+  /**
+   * @returns {import('vue').ComputedRef<boolean>} Whether token is expired
+   */
+  get tokenExpired() {
+    return this._tokenExpired;
+  }
+
+  /**
+   * Get the Keycloak instance (specific to this provider)
+   * @returns {import('vue').Ref<Keycloak>} Keycloak instance
+   */
+  get keycloakInstance() {
+    return this._keycloakInstance;
   }
 
   /**
@@ -35,11 +60,11 @@ class KeycloakProvider {
    */
   initialize() {
     // Prevent duplicate initialization
-    if (this.state.initializing || this.state.isInitialized) {
-      return Promise.resolve(this.state.isAuthenticated);
+    if (this._state.initializing || this._state.isInitialized) {
+      return Promise.resolve(this._state.isAuthenticated);
     }
     
-    this.state.initializing = true;
+    this._state.initializing = true;
 
     const keycloakConfig = {
       url: import.meta.env.VITE_KEYCLOAK_URL,
@@ -47,9 +72,9 @@ class KeycloakProvider {
       clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID
     };
 
-    this.keycloakInstance.value = new Keycloak(keycloakConfig);
+    this._keycloakInstance.value = new Keycloak(keycloakConfig);
 
-    return this.keycloakInstance.value
+    return this._keycloakInstance.value
       .init({
         onLoad: 'check-sso',
         pkceMethod: 'S256',
@@ -59,10 +84,10 @@ class KeycloakProvider {
         scope: 'openid profile backend-access'
       })
       .then((authenticated) => {
-        this.state.isAuthenticated = authenticated;
-        this.state.isInitialized = true;
-        this.state.keycloakReady = true;
-        this.state.initializing = false;
+        this._state.isAuthenticated = authenticated;
+        this._state.isInitialized = true;
+        this._state.keycloakReady = true;
+        this._state.initializing = false;
         
         if (authenticated) {
           this._updateTokenExpiration();
@@ -73,9 +98,9 @@ class KeycloakProvider {
         return authenticated;
       })
       .catch((error) => {
-        this.state.authError = error;
-        this.state.isInitialized = true;
-        this.state.initializing = false;
+        this._state.authError = error;
+        this._state.isInitialized = true;
+        this._state.initializing = false;
         console.error('Keycloak initialization error', error);
         throw error;
       });
@@ -87,43 +112,43 @@ class KeycloakProvider {
    * @returns {Promise<Object>} Promise resolving to user profile object
    */
   loadUserProfile(retryCount = 0) {
-    if (!this.keycloakInstance.value || !this.state.isAuthenticated) {
+    if (!this._keycloakInstance.value || !this._state.isAuthenticated) {
       return Promise.reject(new Error('Not authenticated'));
     }
 
     // Check if we already have the profile
-    if (this.state.userProfile) {
-      return Promise.resolve(this.state.userProfile);
+    if (this._state.userProfile) {
+      return Promise.resolve(this._state.userProfile);
     }
     
     // Update loading status
-    this.state.profileLoadingStatus = `Attempt ${retryCount + 1}/${this.state.maxProfileLoadRetries + 1}`;
-    this.state.profileLoadRetries = retryCount;
+    this._state.profileLoadingStatus = `Attempt ${retryCount + 1}/${this._state.maxProfileLoadRetries + 1}`;
+    this._state.profileLoadRetries = retryCount;
 
     // First method: Try to use the userinfo endpoint directly
     return this._getUserInfoFromToken()
       .then(profile => {
-        this.state.userProfile = profile;
-        this.state.profileLoadingStatus = 'success';
+        this._state.userProfile = profile;
+        this._state.profileLoadingStatus = 'success';
         return profile;
       })
       .catch(error => {
         console.warn('Failed to parse user info from token, trying Keycloak API', error);
         
         // Fallback to Keycloak's loadUserProfile method
-        return this.keycloakInstance.value.loadUserProfile()
+        return this._keycloakInstance.value.loadUserProfile()
           .then(profile => {
-            this.state.userProfile = profile;
-            this.state.profileLoadingStatus = 'success';
+            this._state.userProfile = profile;
+            this._state.profileLoadingStatus = 'success';
             return profile;
           })
           .catch(error => {
             console.error(`Error loading user profile (attempt ${retryCount + 1})`, error);
             
             // Implement retry with exponential backoff
-            if (retryCount < this.state.maxProfileLoadRetries) {
+            if (retryCount < this._state.maxProfileLoadRetries) {
               const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
-              this.state.profileLoadingStatus = `Retrying in ${delay/1000}s...`;
+              this._state.profileLoadingStatus = `Retrying in ${delay/1000}s...`;
               
               return new Promise(resolve => {
                 setTimeout(() => {
@@ -131,7 +156,7 @@ class KeycloakProvider {
                 }, delay);
               });
             } else {
-              this.state.profileLoadingStatus = 'failed';
+              this._state.profileLoadingStatus = 'failed';
               throw error;
             }
           });
@@ -144,13 +169,13 @@ class KeycloakProvider {
    * @private
    */
   _getUserInfoFromToken() {
-    if (!this.keycloakInstance.value || !this.keycloakInstance.value.token) {
+    if (!this._keycloakInstance.value || !this._keycloakInstance.value.token) {
       return Promise.reject(new Error('No token available'));
     }
     
     try {
       // Parse the token
-      const tokenParts = this.keycloakInstance.value.token.split('.');
+      const tokenParts = this._keycloakInstance.value.token.split('.');
       const tokenPayload = JSON.parse(atob(tokenParts[1]));
       
       // Create a user profile object from token claims
@@ -175,11 +200,11 @@ class KeycloakProvider {
    * @returns {Promise<void>} Promise that resolves after login initiated
    */
   login(redirectUri = window.location.href) {
-    if (!this.keycloakInstance.value) {
+    if (!this._keycloakInstance.value) {
       return Promise.reject(new Error('Keycloak not initialized'));
     }
     
-    return this.keycloakInstance.value.login({
+    return this._keycloakInstance.value.login({
       redirectUri,
       prompt: 'login',
     });
@@ -190,11 +215,11 @@ class KeycloakProvider {
    * @returns {Promise<void>} Promise that resolves after logout initiated
    */
   logout() {
-    if (!this.keycloakInstance.value) {
+    if (!this._keycloakInstance.value) {
       return Promise.reject(new Error('Keycloak not initialized'));
     }
     
-    return this.keycloakInstance.value.logout();
+    return this._keycloakInstance.value.logout();
   }
 
   /**
@@ -202,12 +227,12 @@ class KeycloakProvider {
    * @private
    */
   _updateTokenExpiration() {
-    if (this.keycloakInstance.value && this.keycloakInstance.value.token) {
+    if (this._keycloakInstance.value && this._keycloakInstance.value.token) {
       // Parse JWT to get expiration
       try {
-        const tokenParts = this.keycloakInstance.value.token.split('.');
+        const tokenParts = this._keycloakInstance.value.token.split('.');
         const tokenPayload = JSON.parse(atob(tokenParts[1]));
-        this.state.tokenExpiration = tokenPayload.exp * 1000; // Convert to milliseconds
+        this._state.tokenExpiration = tokenPayload.exp * 1000; // Convert to milliseconds
       } catch (error) {
         console.error('Error parsing token', error);
       }
@@ -219,10 +244,10 @@ class KeycloakProvider {
    * @returns {string|null} Current auth token or null if not authenticated
    */
   getToken() {
-    if (!this.keycloakInstance.value || !this.state.isAuthenticated) {
+    if (!this._keycloakInstance.value || !this._state.isAuthenticated) {
       return null;
     }
-    return this.keycloakInstance.value.token;
+    return this._keycloakInstance.value.token;
   }
 
   /**
@@ -231,17 +256,17 @@ class KeycloakProvider {
    * @returns {Promise<string>} Promise resolving to the new token
    */
   updateToken(minValidity = 60) {
-    if (!this.keycloakInstance.value || !this.state.isAuthenticated) {
+    if (!this._keycloakInstance.value || !this._state.isAuthenticated) {
       return Promise.reject(new Error('Not authenticated'));
     }
     
-    return this.keycloakInstance.value
+    return this._keycloakInstance.value
       .updateToken(minValidity)
       .then((refreshed) => {
         if (refreshed) {
           this._updateTokenExpiration();
         }
-        return this.keycloakInstance.value.token;
+        return this._keycloakInstance.value.token;
       })
       .catch((error) => {
         console.error('Failed to refresh token', error);
@@ -254,11 +279,11 @@ class KeycloakProvider {
    * @returns {Function} Cleanup function
    */
   setupTokenRefresh() {
-    if (!this.keycloakInstance.value || !this.state.isAuthenticated) return () => {};
+    if (!this._keycloakInstance.value || !this._state.isAuthenticated) return () => {};
     
     // Schedule token refresh at 70% of token lifetime
     const tokenUpdateInterval = setInterval(() => {
-      if (!this.state.isAuthenticated) {
+      if (!this._state.isAuthenticated) {
         clearInterval(tokenUpdateInterval);
         return;
       }
@@ -281,10 +306,10 @@ class KeycloakProvider {
    * @returns {boolean} Whether user has the role
    */
   hasRealmRole(role) {
-    if (!this.keycloakInstance.value || !this.state.isAuthenticated) {
+    if (!this._keycloakInstance.value || !this._state.isAuthenticated) {
       return false;
     }
-    return this.keycloakInstance.value.hasRealmRole(role);
+    return this._keycloakInstance.value.hasRealmRole(role);
   }
 }
 

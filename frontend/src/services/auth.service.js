@@ -1,5 +1,4 @@
-import { ref, reactive, computed } from '@vue/reactivity';
-import keycloakProvider from './keycloak.provider';
+import keycloakProvider from '@/providers/auth/KeycloakProvider';
 
 /**
  * Auth Service
