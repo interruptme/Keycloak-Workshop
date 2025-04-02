@@ -65,7 +65,7 @@ class OidcProvider extends AuthProviderInterface {
       redirect_uri: import.meta.env.VITE_OIDC_REDIRECT_URI || `${window.location.origin}/callback`,
       post_logout_redirect_uri: import.meta.env.VITE_OIDC_POST_LOGOUT_REDIRECT_URI || window.location.origin,
       response_type: 'code',
-      scope: 'openid profile email',
+      scope: 'openid profile email backend-access',
       automaticSilentRenew: true,
       includeIdTokenInSilentRenew: true,
       loadUserInfo: true,
