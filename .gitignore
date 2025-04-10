@@ -23,6 +23,7 @@ node_modules
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+nupkg/
 
 # Environment variables
 .env.local
@@ -38,12 +39,40 @@ node_modules
 *.njsproj
 *.sln
 *.sw?
+.vs/
 
 # Build and dist
 dist
 dist-ssr
 *.local
 coverage
+
+# .NET specific
+*.swp
+*.*~
+project.lock.json
+*.pyc
+
+# User-specific files
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+msbuild.log
+msbuild.err
+msbuild.wrn
 
 # Logs
 logs
